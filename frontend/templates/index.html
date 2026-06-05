@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CareTrust AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/styles.css"/>
+</head>
+<body>
+
+<!-- IMPERSONATION BANNER -->
+<div id="impersonationBanner" class="impersonation-banner hidden">
+  <span id="impersonationLabel">👁 Viewing as —</span>
+  <button onclick="endImpersonation()">← Back to Admin</button>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-hero">
+    <div class="login-brand-badge">Trust UI &amp; Safety Governance</div>
+    <h1>CareTrust AI</h1>
+  </div>
+  <div class="login-panel">
+    <div class="panel-logo">
+      <div class="logo-box">+</div>
+      <div><div class="brand-title">CareTrust AI</div><div class="brand-sub">Secure role access</div></div>
+    </div>
+    <h2>Welcome back</h2>
+    <p class="muted" style="margin-bottom:16px">Sign in to continue</p>
+    <div id="loginError" class="login-error hidden">Invalid username or password.</div>
+    <div class="form-group"><label>Username</label><input id="loginUser" type="text" placeholder="e.g. NurseEmma" autocomplete="username"></div>
+    <div class="form-group"><label>Password</label><input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">Sign In</button>
+    <div class="demo-card">
+      <div class="demo-title">Demo accounts</div>
+      <div class="demo-buttons">
+        <button class="demo-btn" onclick="quickLogin('NurseEmma','nurse123')">Nurse 1</button>
+        <button class="demo-btn" onclick="quickLogin('NurseSara','nurse2123')">Nurse 2</button>
+        <button class="demo-btn" onclick="quickLogin('CaretakerRavi','caretaker123')">Caretaker 1</button>
+        <button class="demo-btn" onclick="quickLogin('CaretakerLatha','caretaker223')">Caretaker 2</button>
+        <button class="demo-btn" onclick="quickLogin('DrArun','doctor123')">Doctor</button>
+        <button class="demo-btn" onclick="quickLogin('ChiefMary','chiefnurse123')">Chief Nurse</button>
+        <button class="demo-btn" onclick="quickLogin('ManagerPriya','manager123')">Manager</button>
+        <button class="demo-btn" onclick="quickLogin('AdminUser','admin123')">Admin</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell" class="app-shell hidden">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-brand">
+        <div class="logo-box small">+</div>
+        <div><div class="brand-title">CareTrust AI</div><div class="brand-sub">Safety Governance</div></div>
+      </div>
+      <div class="user-card">
+        <div class="avatar" id="userAvatar">U</div>
+        <div><div id="userNameLabel" class="user-name">User</div><div id="userRoleLabel" class="role-chip">role</div></div>
+      </div>
+    </div>
+    <nav id="sideNav" class="nav-list"></nav>
+    <button class="btn btn-ghost logout-btn" onclick="doLogout()">Sign Out</button>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div>
+        <div class="welcome-text">Welcome back,</div>
+        <h2 id="pageTitle">Dashboard</h2>
+      </div>
+      <div class="topbar-actions">
+        <button class="bell-btn" onclick="toggleNotifications()">🔔<span id="bellCount" class="bell-count hidden">0</span></button>
+      </div>
+    </header>
+
+    <div id="notificationPanel" class="notification-panel hidden">
+      <div class="section-head">
+        <h3>🔔 Notifications</h3>
+        <button class="btn btn-secondary btn-sm" onclick="markNotificationsRead()">Mark all read</button>
+      </div>
+      <div id="notificationList" class="card-stack"></div>
+    </div>
+
+    <!-- WORKER DASHBOARD -->
+    <section id="view-worker-dashboard" class="view hidden">
+      <div class="stats-grid" id="workerStats"></div>
+      <div class="dashboard-grid three">
+        <div class="surface-card"><div class="section-head"><h3>🚨 Alerts</h3></div><div id="workerAlertList" class="card-stack"></div></div>
+        <div class="surface-card"><div class="section-head"><h3>⚡ Pre-Alerts</h3></div><div id="workerPreAlertList" class="card-stack"></div></div>
+        <div class="surface-card">
+          <div class="section-head">
+            <h3>✅ Tasks</h3>
+            <select id="doctorTaskWorkerFilter" onchange="renderWorkerDashboard()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid #d7dce5"><option value="all">All Workers</option></select>
+          </div>
+          <div id="workerTaskList" class="card-stack"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MY PATIENTS -->
+    <section id="view-my-patients" class="view hidden">
+      <div class="surface-card"><div class="section-head"><h3>Assigned Patients</h3></div><div id="patientGrid" class="patient-grid"></div></div>
+    </section>
+
+    <!-- CARE LOG -->
+    <section id="view-care-log" class="view hidden">
+      <div class="grid-2" style="align-items:start;gap:20px">
+        <!-- LEFT: care log form -->
+        <div class="surface-card form-wrap">
+          <div class="section-head"><h3>Submit Care Log</h3></div>
+          <div class="form-group"><label>Patient</label><select id="logPatientSelect"></select></div>
+          <div class="grid-2">
+            <div class="form-group"><label>Meal</label><select id="logMeal"><option value="">-- optional --</option><option value="breakfast">Breakfast</option><option value="lunch">Lunch</option><option value="dinner">Dinner</option></select></div>
+            <div class="form-group"><label>Fluid Intake (ml)</label><input id="logFluid" type="number" placeholder="e.g. 500"></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Food Intake</label><select id="logFood"><option value="">-- optional --</option><option>Good</option><option>Moderate</option><option>Low</option></select></div>
+            <div class="form-group"><label>Blood Pressure</label><input id="logBP" type="text" placeholder="e.g. 130/80"></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Oxygen Level (%)</label><input id="logOxygen" type="number" placeholder="e.g. 97"></div>
+            <div class="form-group"><label>Sugar Level</label><input id="logSugar" type="text" placeholder="e.g. 140"></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Sleep Hours (last night)</label><input id="logSleep" type="number" step="0.5" min="0" max="24" placeholder="e.g. 6.5"></div>
+            <div class="form-group"><label>Confusion Noted?</label><select id="logConfusion"><option value="">-- optional --</option><option value="true">Yes</option><option value="false">No</option></select></div>
+          </div>
+          <div id="extraFieldsContainer"></div>
+          <div class="form-group"><label>Notes</label><textarea id="logNotes" placeholder="Any observations, complaints, or remarks…"></textarea></div>
+          <button class="btn btn-primary" onclick="submitCareLog()">Save Log</button>
+        </div>
+
+        <!-- RIGHT: incident report panel -->
+        <div id="incidentReportForm" class="surface-card form-wrap" style="border-left:4px solid #b45309">
+          <div class="section-head">
+            <h3 style="color:#b45309">⚠ Report Incident</h3>
+          </div>
+          <div class="form-group">
+            <label>Patient</label>
+            <select id="incidentPatientSelect" style="width:100%"></select>
+          </div>
+          <div class="form-group">
+            <label>What happened?</label>
+            <textarea id="incidentSummary" rows="4"
+              placeholder="e.g. Patient had a near-fall near the bedside at 3pm. Caught by caretaker. No injury."
+              style="resize:vertical"></textarea>
+          </div>
+          <button class="btn btn-primary" style="background:#b45309" onclick="submitIncidentReport()">
+            Submit Incident
+          </button>
+          <p style="font-size:11px;color:#6b7888;margin-top:10px">
+            Incident will be saved and appear in the patient timeline report.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ASK AI -->
+    <section id="view-ask-ai" class="view hidden">
+      <div class="surface-card" style="max-width:700px">
+        <div class="section-head"><h3>🤖 Ask AI / Medication Check</h3></div>
+        <div class="form-group"><label>Patient</label><select id="askPatientSelect" onchange="loadChatHistory()"></select></div>
+        <div id="chatHistoryLabel" style="font-size:12px;color:#6b7888;margin-bottom:6px"></div>
+        <div id="chatMessages" class="chat-messages"></div>
+        <div id="imgPreview" class="img-preview hidden"></div>
+        <div class="chat-input-row">
+          <label class="upload-btn-label" for="chatImageInput" title="Upload medicine image">📷</label>
+          <input id="chatImageInput" type="file" accept="image/*" class="hidden" onchange="onImageSelected(this)">
+          <textarea id="chatInput" placeholder="Ask about medication, symptoms, doctor instructions…" rows="2"></textarea>
+          <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOCTOR TASKS & ASSESSMENTS -->
+    <section id="view-doctor-management" class="view hidden">
+      <div class="dashboard-grid one">
+        <div class="surface-card form-wrap">
+          <div class="section-head"><h3>Assign Task</h3></div>
+          <div class="grid-2">
+            <div class="form-group"><label>Patient</label><select id="taskPatientSelect"></select></div>
+            <div class="form-group"><label>Current Handler (auto)</label><input id="taskAssignedAuto" readonly placeholder="Select patient first…"></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Task Title</label><input id="taskTitle" placeholder="e.g. Check BP"></div>
+            <div class="form-group"><label>Due Time</label><input id="taskDue" placeholder="e.g. 10:00 AM"></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Linked Field <span style="font-weight:400;color:#9aa3af">(auto-completes task when nurse logs this — leave blank for manual)</span></label>
+              <select id="taskLinkedField">
+                <option value="">— Manual (nurse completes manually) —</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Instruction</label><textarea id="taskInstruction" placeholder="Detailed instructions…" style="min-height:44px"></textarea></div>
+          </div>
+          <button class="btn btn-primary" onclick="createTask()">Assign Task</button>
+        </div>
+        <div class="dashboard-grid two">
+          <div class="surface-card form-wrap">
+            <div class="section-head"><h3>New Patient Assessment</h3></div>
+            <div class="form-group"><label>Patient Name</label><input id="newPatientName" placeholder="Full name"></div>
+            <div class="grid-2">
+              <div class="form-group"><label>Age</label><input id="newPatientAge" type="number"></div>
+              <div class="form-group"><label>Gender</label><select id="newPatientGender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+            </div>
+            <div class="form-group"><label>Symptom Duration</label><input id="newAssessDuration" placeholder="e.g. 3 days"></div>
+            <div class="form-group"><label>Summary / Problem</label><textarea id="newAssessSummary"></textarea></div>
+            <div class="form-group"><label>Doctor Instruction</label><textarea id="newAssessInstruction"></textarea></div>
+            <div class="form-group"><label>Room No.</label><select id="newAssessRoom"></select></div>
+            <div class="form-group">
+              <label>Upload Document (PDF — one file only)</label>
+              <input id="newAssessmentPdf" type="file" accept=".pdf,application/pdf"
+                onchange="validatePdfInput(this,'newAssessmentPdfMsg')">
+              <div id="newAssessmentPdfMsg" style="display:none;margin-top:6px"></div>
+            </div>
+            <button class="btn btn-primary" onclick="submitNewPatientAssessment()">Save &amp; Add Patient</button>
+          </div>
+          <div class="surface-card form-wrap">
+            <div class="section-head"><h3>Update Assessment</h3></div>
+            <div class="form-group"><label>Patient</label><select id="assessmentPatientSelect" onchange="loadAssessmentHistory()"></select></div>
+            <div class="form-group"><label>Current Handler</label><input id="assessmentCurrentHandler" readonly></div>
+            <div id="assessmentHistory" class="card-stack" style="margin-bottom:12px"></div>
+            <div class="form-group"><label>Symptom Duration</label><input id="assessDuration"></div>
+            <div class="form-group"><label>Summary</label><textarea id="assessSummary"></textarea></div>
+            <div class="form-group"><label>Instruction</label><textarea id="assessInstruction"></textarea></div>
+            <div class="form-group">
+              <label>Upload New Document (PDF — one file only)</label>
+              <input id="assessmentPdf" type="file" accept=".pdf,application/pdf"
+                onchange="validatePdfInput(this,'assessmentPdfMsg')">
+              <div id="assessmentPdfMsg" style="display:none;margin-top:6px"></div>
+            </div>
+            <button class="btn btn-primary" onclick="submitAssessment()">Save Assessment</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOCTOR DOCS & POLICIES -->
+    <section id="view-doctor-docs" class="view hidden">
+      <div class="dashboard-grid two">
+        <div class="surface-card">
+          <div class="section-head"><h3>📄 Patient Documents</h3></div>
+          <div class="form-group"><label>Patient</label><select id="docPatientSelect" onchange="loadDocs()"></select></div>
+          <div class="card-stack" id="docList"></div>
+          <hr>
+          <div class="section-head" style="margin-top:8px"><h3>🗑 Recycle Bin</h3></div>
+          <div class="card-stack" id="recycleList"></div>
+        </div>
+        <div class="surface-card">
+          <div class="section-head"><h3>📋 Patient Policies</h3></div>
+          <div class="form-group"><label>Patient</label><select id="doctorPolicyPatientSelect" onchange="loadDoctorPolicyList()"></select></div>
+          <div class="card-stack" id="doctorPolicyList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHIEF NURSE — redesigned: no pre-alerts column, single dropdown transfer -->
+    <section id="view-chief" class="view hidden">
+      <div class="surface-card" style="max-width:560px;margin-bottom:16px">
+        <div class="section-head">
+          <h3>Transfer / Discharge</h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddRoom()">+ Add Room</button>
+        </div>
+        <div class="form-group"><label>Patient</label><select id="chiefPatientSelect" onchange="showCurrentAssigned()"></select></div>
+        <div class="form-group"><label>Current Handler</label><input id="currentAssignedNurse" readonly></div>
+        <div class="form-group">
+          <label>Transfer To (Nurse or Caretaker)</label>
+          <select id="chiefTransferTarget"></select>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <button class="btn btn-secondary" onclick="transferPatient()">→ Transfer</button>
+          <button class="btn btn-danger" onclick="dischargePatient()">Discharge</button>
+        </div>
+      </div>
+      <div class="surface-card">
+        <div class="section-head"><h3>🏥 Rooms</h3></div>
+        <div id="chiefRoomGrid" class="room-grid"></div>
+      </div>
+    </section>
+
+    <!-- MANAGER -->
+    <section id="view-manager" class="view hidden">
+      <div class="dashboard-grid two">
+        <div class="surface-card">
+          <div class="section-head"><h3>📋 Organisation Policies</h3><button class="btn btn-primary btn-sm" onclick="openPolicyModal()">+ Add Policy</button></div>
+          <div id="managerPolicyList" class="card-stack"></div>
+        </div>
+        <div class="surface-card">
+          <div class="section-head"><h3>📊 Timeline Reports</h3></div>
+          <p class="muted" style="font-size:13px;margin-bottom:12px">Click a patient to generate their timeline report with date filter and PDF download.</p>
+          <div id="managerIncidentList" class="card-stack"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PATIENT POLICIES -->
+    <section id="view-policies" class="view hidden">
+      <div class="dashboard-grid two">
+        <div class="surface-card">
+          <div class="section-head"><h3>Patient Policies</h3></div>
+          <div class="form-group"><label>Patient</label><select id="managerPatientPolicySelect" onchange="loadManagerAllPoliciesForPatient()"></select></div>
+          <div id="managerPatientPolicyList" class="card-stack"></div>
+        </div>
+        <div class="surface-card">
+          <div class="section-head"><h3>📝 Policy Requests</h3></div>
+          <div id="policyRequestList" class="card-stack"></div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- VIEW LOG FIELDS -->
+    <section id="view-log-fields" class="view hidden">
+      <div class="grid-2">
+        <div class="card">
+          <h3>➕ Add Custom Log Field</h3>
+
+          <div class="form-group">
+            <label>Field Key</label>
+            <input id="lfKey" placeholder="e.g. appetite_score" />
+          </div>
+
+          <div class="form-group">
+            <label>Label</label>
+            <input id="lfLabel" placeholder="e.g. Appetite Score" />
+          </div>
+
+          <div class="form-group">
+            <label>Type</label>
+            <select id="lfType">
+              <option value="threshold">Threshold</option>
+              <option value="yes_no">Yes / No</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Unit</label>
+            <input id="lfUnit" placeholder="e.g. /10, ml, cm" />
+          </div>
+
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="lfDesc" rows="3" placeholder="Short explanation of what this field means"></textarea>
+          </div>
+
+          <button class="btn btn-primary" onclick="addLogField()">Save Field</button>
+          <div id="lfMsg" class="muted" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="card">
+          <h3>📋 Available Log Fields</h3>
+          <div id="logFieldsList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="view-admin" class="view hidden">
+      <div class="dashboard-grid two">
+        <div class="surface-card">
+          <div class="section-head"><h3>👥 Workers <small style="font-size:11px;color:#6b7888;font-weight:400">— click to view as that user</small></h3></div>
+          <div id="adminUserList" class="card-stack"></div>
+        </div>
+        <div class="surface-card form-wrap">
+          <div class="section-head"><h3>Create Worker</h3></div>
+          <div class="form-group"><label>Full Name</label><input id="newWorkerName" placeholder="e.g. Nurse Priya"></div>
+          <div class="grid-2">
+            <div class="form-group"><label>Age</label><input id="newWorkerAge" type="number" placeholder="28"></div>
+            <div class="form-group"><label>Role</label><select id="newWorkerRole"><option value="nurse">Nurse</option><option value="caretaker">Caretaker</option></select></div>
+          </div>
+          <div class="form-group"><label>Password</label><input id="newWorkerPassword" type="password" placeholder="••••••"></div>
+          <button class="btn btn-primary" onclick="createWorker()">Create Worker</button>
+          <div id="workerMsg"></div>
+          <hr>
+          <div class="section-head"><h3>Set Worker Inactive</h3></div>
+          <div class="form-group"><label>Worker to deactivate</label><select id="deleteWorkerSelect"></select></div>
+          <div class="form-group"><label>Transfer patients to</label><select id="transferWorkerSelect"></select></div>
+          <button class="btn btn-danger" onclick="inactiveWorker()">Set Inactive</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div id="simpleModal" class="modal hidden">
+  <div class="modal-panel">
+    <button class="modal-close" onclick="closeModal('simpleModal')">×</button>
+    <div id="simpleModalBody"></div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

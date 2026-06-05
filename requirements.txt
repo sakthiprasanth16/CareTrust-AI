@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+pypdf
+reportlab
+google-generativeai
+pillow
+pymongo
+pinecone
+python-dotenv
+pydantic
+httpx
+sentence-transformers
+torch
+apscheduler
